@@ -10,3 +10,6 @@ __pycache__/
 lib/
 bin/
 pyvenv.cfg
+*.csv
+*.litematic
+*.schematic

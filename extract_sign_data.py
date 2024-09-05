@@ -18,9 +18,6 @@ def extract_sign_data(file_path):
                 text_fields = []
                 for item in sign_entity["front_text"]["messages"]:
                     json_obj = json.loads(item)
-                    if len(json_obj) > 2:
-                        continue
-
                     if ":" in json_obj["text"]:
                         split_text = json_obj["text"].split(":", 1)
                         first_part = split_text[0].strip()
@@ -28,33 +25,29 @@ def extract_sign_data(file_path):
                         text_fields.append(first_part)
                         text_fields.append(second_part)
                         continue
-                    for text in json_obj:
+                    else:
                         text_fields.append(json_obj["text"])
-                sign = {
-                    "Text": text_fields,
-                }
-                sign_data.append(sign)
+                if "[ChestShop]" not in text_fields:
+                    continue
+                else:
+                    sign_data.append(text_fields)
     csv_sheet = []
     for entry in sign_data:
-        if "" in entry["Text"]:
+        if "" in entry:
             continue
-        text = entry["Text"]
+        text = entry
         csv_sort = {
             "Product": text[-1],
-            "Quantity": text[0],
+            "Quantity": text[1],
             "Sell Price": None,
             "Buy Price": None,
         }
 
         for line in text[1:-1]:
-            if line.startswith("S"):
-                csv_sort["Sell Price"] = line[1:].strip()
-            elif line.startswith(" S"):
-                csv_sort["Sell Price"] = line[2:].strip()
-            elif line.startswith("B"):
-                csv_sort["Buy Price"] = line[1:].strip()
-            elif line.startswith(" B"):
-                csv_sort["Buy Price"] = line[2:].strip()
+            if "S" in line:
+                csv_sort["Sell Price"] = line.strip("S")
+            elif "B" in line:
+                csv_sort["Buy Price"] = line.strip("B")
 
         csv_sheet.append(csv_sort)
 

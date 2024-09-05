@@ -4,7 +4,7 @@ import sys
 import csv
 
 
-def extract_sign_data(file_path):
+def extract_sign_data(file_path, export_type):
     schematic = Schematic.load(file_path)
     shop_name = file_path.lstrip(".\\").rstrip(".litematic")
     sign_data = []
@@ -31,8 +31,45 @@ def extract_sign_data(file_path):
                     continue
                 else:
                     sign_data.append(text_fields)
+    if export_type == "csv":
+        csv_export(sign_data, shop_name)
+    elif export_type == "json":
+        json_export(sign_data, shop_name)
+    else:
+        print("Unsupported filetype, exiting")
+        return
+
+
+def json_export(sign, shop):
+    shop_name = shop.replace("'", "")
+    shop_data = {}
+    for entry in sign:
+        if "" in entry:
+            continue
+        text = entry
+        for line in text[1:-1]:
+            if "S" in line:
+                sell_value = line.strip("S")
+            elif "B" in line:
+                buy_value = line.strip("B")
+        item_name = text[-1]
+        shop_data.setdefault(item_name, [])
+        shop_data[item_name].append(
+            {
+                "Quantity": text[1],
+                "Sell_price": sell_value,
+                "Buy_price": buy_value,
+            }
+        )
+    with open(f"{shop_name}.json", "w", encoding="utf-8") as o:
+        json.dump(shop_data, o, ensure_ascii=False, indent=4)
+
+    print(f"Saved shop data to {shop_name}.json")
+
+
+def csv_export(sign, shop):
     csv_sheet = []
-    for entry in sign_data:
+    for entry in sign:
         if "" in entry:
             continue
         text = entry
@@ -51,7 +88,7 @@ def extract_sign_data(file_path):
 
         csv_sheet.append(csv_sort)
 
-    csv_file = shop_name + ".csv"
+    csv_file = shop + ".csv"
     with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(
             file, fieldnames=["Product", "Quantity", "Sell Price", "Buy Price"]
@@ -63,8 +100,9 @@ def extract_sign_data(file_path):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python extract_sign_data.py <file_path>")
+    if len(sys.argv) != 3:
+        print("Usage: python extract_sign_data.py [csv/json] <file_path>")
         sys.exit(1)
-    file_path = sys.argv[1]
-    extract_sign_data(file_path)
+    export_type = sys.argv[1].lower()
+    file_path = sys.argv[2]
+    extract_sign_data(file_path, export_type)

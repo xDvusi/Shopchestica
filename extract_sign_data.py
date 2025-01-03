@@ -2,11 +2,12 @@ import json
 from litemapy import Schematic
 import sys
 import csv
+import os
 
 
 def extract_sign_data(file_path, export_type):
     schematic = Schematic.load(file_path)
-    shop_name = file_path.lstrip(".\\").rstrip(".litematic")
+    shop_name = os.path.basename(file_path).split(".")[0]
     sign_data = []
     for region in schematic.regions.values():
         for tile_entity in region.tile_entities:
@@ -27,7 +28,7 @@ def extract_sign_data(file_path, export_type):
                         continue
                     else:
                         text_fields.append(json_obj["text"])
-                if "[ChestShop]" not in text_fields:
+                if not text_fields[1].isdigit() or text_fields[-1] == "?":
                     continue
                 else:
                     sign_data.append(text_fields)
@@ -41,7 +42,7 @@ def extract_sign_data(file_path, export_type):
 
 
 def json_export(sign, shop):
-    shop_name = shop.replace("'", "")
+    shop_name = shop
     shop_data = {}
     for entry in sign:
         if "" in entry:
@@ -49,18 +50,19 @@ def json_export(sign, shop):
         text = entry
         for line in text[1:-1]:
             if "S" in line:
-                sell_value = line.strip("S")
+                sell_value = float(line.strip("S").strip(" "))
             elif "B" in line:
-                buy_value = line.strip("B")
+                buy_value = float(line.strip("B").strip(" "))
+            else:
+                sell_value = 0
+                buy_value = 0
         item_name = text[-1]
         shop_data.setdefault(item_name, [])
-        shop_data[item_name].append(
-            {
-                "Quantity": text[1],
-                "Sell_price": sell_value,
-                "Buy_price": buy_value,
-            }
-        )
+        shop_data[item_name] = {
+            "Quantity": int(text[1]),
+            "Sell_price": sell_value,
+            "Buy_price": buy_value,
+        }
     with open(f"{shop_name}.json", "w", encoding="utf-8") as o:
         json.dump(shop_data, o, ensure_ascii=False, indent=4)
 

@@ -58,11 +58,13 @@ def json_export(sign, shop):
                 buy_value = 0
         item_name = text[-1]
         shop_data.setdefault(item_name, [])
-        shop_data[item_name] = {
-            "Quantity": int(text[1]),
-            "Sell_price": sell_value,
-            "Buy_price": buy_value,
-        }
+        shop_data[item_name].append(
+            {
+                "Quantity": int(text[1]),
+                "Sell_price": sell_value,
+                "Buy_price": buy_value,
+            }
+        )
     with open(f"{shop_name}.json", "w", encoding="utf-8") as o:
         json.dump(shop_data, o, ensure_ascii=False, indent=4)
 

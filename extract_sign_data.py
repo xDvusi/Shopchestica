@@ -56,13 +56,13 @@ def json_export(sign, shop):
             else:
                 sell_value = 0
                 buy_value = 0
-        item_name = text[-1]
+        item_name = text[-1].lower()
         shop_data.setdefault(item_name, [])
         shop_data[item_name].append(
             {
-                "Quantity": int(text[1]),
-                "Sell_price": sell_value,
-                "Buy_price": buy_value,
+                "quantity": int(text[1]),
+                "sell_price": sell_value,
+                "buy_price": buy_value,
             }
         )
     with open(f"{shop_name}.json", "w", encoding="utf-8") as o:
